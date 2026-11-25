@@ -1,0 +1,4 @@
+{
+  "marlow-llm-2026-10-14": { "inPerM": 2.0, "outPerM": 10.0, "note": "the mid-tier stand-in: the same prices as the mid tier on the MC9 cost card" },
+  "marlow-llm-mini-2026-10-14": { "inPerM": 0.1, "outPerM": 0.5, "note": "the small stand-in: the same prices as the small tier on the MC9 cost card" }
+}
