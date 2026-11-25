@@ -1,0 +1,27 @@
+{
+  "levels": [
+    {
+      "label": "A question to ask yourself",
+      "text": "You have stopped the leak from today on. What is still on disk from before? Who needs to be told, what do you do first, and how will you know the cleanup worked?"
+    },
+    {
+      "label": "The approach",
+      "text": "Three pieces. (1) docs/RUNBOOK-pii-in-logs.md: who is paged, containment (the flag), how far back to look, the purge, how to verify, and two severity levels (a guardrail that is not firing is high; one value that got through is lower). Use real commands. Then rehearse it on data/sample-leaked.log and write the date and what you found on a \"Rehearsed:\" line. (2) scripts/purge-logs.mjs: read a log, write a cleaned COPY, keep clean lines exactly as they were, keep every cleaned line valid JSON, say \"N of M lines changed\". (3) Add an email pattern to redact.mjs, extend the corpus with email requests, and run the gate again."
+    },
+    {
+      "label": "Nearly the answer",
+      "text": "purge: for each non-empty line, try JSON.parse, then redactDeep, and if the result is the same as the input keep the ORIGINAL line text (do not re-serialise lines that did not change); if the line is not JSON, use redactPII on the text. Count changed lines. Write to the output path, never to the input. On data/sample-leaked.log it should say 7 of 12 lines changed. EMAIL = /[\\w.+-]+@[\\w-]+(?:\\.[\\w-]+)+/g replaced with [REDACTED_EMAIL]. The runbook's containment step is: set faq_enabled to false in config/flags.json; verify with npm run test:pii-boundary -- --require-pass."
+    }
+  ],
+  "reveal": {
+    "referenceBrief": "Homework. (1) Write docs/RUNBOOK-pii-in-logs.md for the on-call engineer, with these sections and real commands: who is paged and when, containment (set faq_enabled to false in config/flags.json, and check /version and a test request), how far back to look (from the commit that introduced the leak to now), the purge (npm run purge-logs on a copy, then replace), verify the fix (npm run test:pii-boundary -- --require-pass and the drill), and two severity levels. Rehearse it against data/sample-leaked.log and add a line \"Rehearsed: <date as YYYY-MM-DD>, <what you found>\". (2) Write scripts/purge-logs.mjs <input> <output>: it writes a cleaned copy and never touches the input, leaves lines with nothing to hide exactly as they were, keeps every cleaned line valid JSON, and prints \"<changed> of <total> lines changed\". (3) Add email addresses to src/redact.mjs ([REDACTED_EMAIL]), and add the three email requests to data/pii-corpus.json, so that the gate passes with 23 requests.",
+    "approach": "The new rule keeps old problems from being found twice, and the purge handles the problem that is already on disk. A runbook is only a runbook once somebody has followed it with the clock running: the rehearsal finds the steps that do not work (the usual one is \"check the logs\" with no command). The email is the practice run of the whole loop: a new type of personal data appears, you add a test for it first, then the pattern, then the corpus, and the gate tells you the loop is closed.",
+    "commonMistakes": [
+      "A purge that edits the input in place: if it is wrong, the evidence is gone.",
+      "Re-serialising every line, so lines that had nothing to hide change their spacing or key order.",
+      "A runbook with \"check the logs\" and no command, no path and no time window.",
+      "Adding the email pattern and not the email requests to the corpus: the gate then says nothing about the new type.",
+      "Skipping the rehearsal, so the runbook has never met the sample log."
+    ]
+  }
+}

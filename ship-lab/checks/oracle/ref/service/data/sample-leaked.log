@@ -1,0 +1,12 @@
+{"ts":"2026-11-18T09:12:04.211Z","level":"info","event":"chat.request","query":"what is the late fee"}
+{"ts":"2026-11-18T09:12:04.231Z","level":"info","event":"chat.response","answer":"Here is what the Marlow Mobile documents say: Late fee. A payment more than 3 days late carries a late fee of 100 rupees. [late-fee]","citations":["late-fee"]}
+{"ts":"2026-11-18T09:14:51.002Z","level":"info","event":"chat.request","query":"my number is 98765-43210 and address is 12 MG Road, can you check my plan?"}
+{"ts":"2026-11-18T09:14:51.020Z","level":"info","event":"chat.response","answer":"Here is what the Marlow Mobile documents say: Changing or leaving a plan. [change-plan] You said: \"my number is 98765-43210 and address is 12 MG Road, can you check my plan?\". I have noted it.","citations":["change-plan"]}
+{"ts":"2026-11-18T09:20:33.870Z","level":"info","event":"chat.request","query":"how long does a refund take"}
+{"ts":"2026-11-18T09:31:09.114Z","level":"info","event":"chat.request","query":"call me on +91 91234 56780 about my account 1234 5678 9012 3456"}
+{"ts":"2026-11-18T09:31:09.130Z","level":"error","event":"server.error","message":"model timeout for a request from 9123456780"}
+{"ts":"2026-11-18T09:40:18.640Z","level":"info","event":"chat.request","query":"I live at Flat 4B, Sunrise Apartments, Koramangala, can I get a new SIM delivered?"}
+{"ts":"2026-11-18T09:52:47.305Z","level":"info","event":"chat.request","query":"is there a pack for the UAE"}
+{"ts":"2026-11-18T10:03:12.777Z","level":"info","event":"chat.request","query":"my account is 50100234567890, why was I charged twice?"}
+{"ts":"2026-11-18T10:03:12.790Z","level":"info","event":"chat.response","answer":"Here is what the Marlow Mobile documents say: A charge you do not recognise. [dispute] You said: \"my account is 50100234567890, why was I charged twice?\". I have noted it.","citations":["dispute"]}
+{"ts":"2026-11-18T10:15:00.000Z","level":"info","event":"health.check","status":"ok"}

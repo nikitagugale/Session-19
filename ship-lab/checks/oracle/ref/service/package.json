@@ -1,0 +1,29 @@
+{
+  "name": "ship-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "DD11 lab: take a telecom FAQ service that worked in the demo and make it safe to ship. Redaction at the log boundary, guardrails at both ends, a pinned model and a cost check, a mandatory PII gate, a feature flag with a rollback drill, and an image tagged with the git SHA.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node scripts/test.mjs",
+    "serve": "node src/main.mjs",
+    "chat": "node scripts/chat.mjs",
+    "logs": "node scripts/logs.mjs",
+    "test:pii-boundary": "node scripts/pii-boundary.mjs",
+    "drill": "node scripts/drill.mjs",
+    "image:tag": "node scripts/image-tag.mjs",
+    "image:build": "node scripts/build-image.mjs",
+    "purge-logs": "node scripts/purge-logs.mjs",
+    "help": "node scripts/help.mjs",
+    "setup": "node scripts/lab.mjs setup",
+    "start": "node scripts/lab.mjs start",
+    "progress": "node scripts/progress.mjs",
+    "hint": "node scripts/hint.mjs",
+    "step": "node scripts/lab.mjs step",
+    "checkpoint": "node scripts/lab.mjs checkpoint",
+    "doctor": "node scripts/lab.mjs doctor"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "levels": [
+    {
+      "label": "A question to ask yourself",
+      "text": "Start the service (npm run serve), send it one message with a phone number in it, then open logs/app.log. What exactly is in there? Now say, in one sentence, what a test would have to look at to prove the leak."
+    },
+    {
+      "label": "The approach",
+      "text": "The test starts the service itself, with its OWN log file in a temporary folder, sends one question, closes the service, reads that log file, and asserts the personal detail is NOT in it. Write the cases as a list of [question, [details that must not appear]] and make one test for each. Write the details in different real formats: a phone with a dash, a phone with spaces, an account number, an address."
+    },
+    {
+      "label": "Nearly the answer",
+      "text": "import { config } from \"../../src/config.mjs\" and { startService } from \"../../src/server.mjs\". For each case: const logFile = path.join(mkdtempSync(path.join(os.tmpdir(), \"leak-\")), \"app.log\"); const svc = await startService({ config: { ...config, logFile } }); POST { query } to `${svc.url}/api/chat`; await svc.close() in a finally; then assert !readFileSync(logFile, \"utf8\").toLowerCase().includes(secret.toLowerCase()). Save it as tests/learner/leak.test.js. It must FAIL on the shipped code: that red is the proof."
+    }
+  ],
+  "reveal": {
+    "referenceBrief": "Write tests/learner/leak.test.js: a node:test file with one test for each of at least six cases. Each case is a customer question that contains personal details, and the details written exactly as typed (a phone number with a dash, a phone number with spaces, a plain ten-digit phone, an account number written in groups of four, an account number with no spaces, and an address). Each test starts the service with its own temporary log file, sends the question to POST /api/chat, closes the service, reads the log file and asserts that none of the details is in it. On the shipped service every test must fail, because the log holds what the customer typed. After milestone 2 they must all pass.",
+    "approach": "A test that fails first is the proof that the problem exists, and the same test later is the proof that it is fixed. Without the red you only believe the leak is real. A mixed list of formats matters because the later fix is a set of patterns, and a pattern that catches one spelling and misses another is the usual way this goes wrong: the test has to be able to tell the two apart.",
+    "commonMistakes": [
+      "Testing only one format, such as 9876543210, so a fix for that one passes and a phone written with spaces still leaks.",
+      "Reading the response instead of the log: the answer and the log are two different leaks, and this milestone is the log.",
+      "Sharing the real logs/app.log between tests, so one test sees the lines of another. Give every test its own temporary log file.",
+      "A test that passes on the shipped code. If it is green before the fix, it is not testing the leak: print the log and look.",
+      "Comparing with the exact case of the text, so \"Sunrise Apartments\" and \"sunrise apartments\" look different."
+    ]
+  }
+}

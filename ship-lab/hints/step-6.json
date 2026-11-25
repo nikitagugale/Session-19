@@ -1,0 +1,27 @@
+{
+  "levels": [
+    {
+      "label": "A question to ask yourself",
+      "text": "A test that never fails tells you nothing. If someone deleted the input guardrail tonight, which of your tests would go red? Name it. If you cannot, you have found the gap."
+    },
+    {
+      "label": "The approach",
+      "text": "Write tests/learner/guardrails.test.js with a fake model (an object with an id and a complete() that counts its calls and returns text you choose). Cover the ways a guardrail goes wrong in both directions. Too weak: an attack gets through, the model repeats a phone number, the model prints its own instructions, a huge question is accepted, personal data reaches the log. Too strong: an honest question that sounds like an attack is refused, and an ordinary number (a price, a helpline) gets hidden. At least six tests, and each assertion should be one a broken service would fail."
+    },
+    {
+      "label": "Nearly the answer",
+      "text": "withService(fakeModel, fn): start the service with { config: { ...config, logFile }, model }. Tests: (1) personal data in three formats is absent from the log; (2) a model that says \"your number is 98765-43210\" never reaches the customer or the log; (3) THREE different injections give the same refusal and fakeModel.calls stays 0; (4) a 900-character question is refused with reason too_long; (5) three honest questions that sound like attacks are NOT refused (calls is 3); (6) a model that prints \"You are the Marlow Mobile support assistant ... MARLOW-INTERNAL-7731\" is replaced; (7) a reply with 1499 rupees and 1800-123-4567 comes back whole."
+    }
+  ],
+  "reveal": {
+    "referenceBrief": "Write tests/learner/guardrails.test.js, at least six tests, using a fake model that you control (it counts how many times it was called). The suite must pass on the reference service and on yours, and it must fail on each of eight broken versions of the service: the input guardrail switched off, the output guardrail switched off, the logger not redacting, the length limit never applied, only one phrasing of an attack caught, a guardrail so strong that an honest question about \"instructions\" is refused, a leaked system prompt not caught, and redaction so greedy that a price and a helpline number are hidden. So the suite needs: personal data in the log; personal data the model repeats; at least three different injection phrasings (same fixed reply, model never called); a question over the limit; honest questions that sound like attacks; a model that prints its own instructions; and ordinary numbers that must survive.",
+    "approach": "This is how you test a guardrail: by breaking it on purpose and watching your tests notice. It is called mutation testing, and a hand-made version of it is enough here. Two habits come out of it. First, test the unhappy direction AND the happy direction, because a guardrail that refuses everything also passes every \"attack is blocked\" test. Second, assert on what the customer and the log actually received, not on a function returning true. The tests that bite are the ones about outcomes.",
+    "commonMistakes": [
+      "Only testing that attacks are blocked, so a guardrail that blocks everything passes.",
+      "One phrasing of the attack: a mutant that catches only the first pattern still passes.",
+      "Asserting the model was not called, but never counting its calls, so the assertion is empty. Use a fake model with a counter.",
+      "Testing redactPII on a string but not what reaches the log, so the missing logger boundary is not noticed.",
+      "Not testing that ordinary numbers survive, so a too-greedy pattern passes silently."
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "levels": [
+    {
+      "label": "A question to ask yourself",
+      "text": "Today the model is \"marlow-llm-latest\". If the provider changes what \"latest\" means next Tuesday, who approves the change to your behaviour and your bill? Now: what would you write in config so that nobody has to?"
+    },
+    {
+      "label": "The approach",
+      "text": "Four settings in src/config.mjs: a pinned model (an exact version, with a date or a number in it, never \"latest\"), maxTokens, timeoutMs and a monthly cap with the expected volume. Then src/cost.mjs: estimateCost (tokens times price per million, input and output separately, and an unknown model throws), projectMonthly, costAlert (ok below the warning line, warn from it up to the cap, breach above). Then src/model.mjs: refuse to start with an unpinned model, and cut a slow call off at timeoutMs with a 504. Last, put model, maxTokens, usage and costUSD in every response."
+    },
+    {
+      "label": "Nearly the answer",
+      "text": "estimateCost = (usage.inputTokens * p.inPerM + usage.outputTokens * p.outPerM) / 1e6, and throw if there is no price. projectMonthly = per-request cost times requestsPerMonth. costAlert: ratio = projected / cap; level is \"breach\" if ratio > 1, \"warn\" if ratio >= warnAt (0.8), else \"ok\". isPinned = id => /\\d/.test(id) && !/latest|auto|default|stable|current/i.test(id). Wrap the model call in Promise.race with a timer that rejects with an error that has status 504 and code \"model_timeout\". In answer.mjs: meta = { model, maxTokens, usage, costUSD }. Look at data/prices.json for the prices."
+    }
+  ],
+  "reveal": {
+    "referenceBrief": "Lock the model and the cost. In src/config.mjs set a pinned model that has a price in data/prices.json, maxTokens (a limit a FAQ answer fits in, between 50 and 1000), timeoutMs (0.5 to 30 seconds), maxQueryChars, monthlyCapUSD, alertAt (0.8) and the expected volume (requestsPerMonth, avgInputTokens, avgOutputTokens), chosen so that the projection is below the cap. In src/cost.mjs write estimateCost(usage, modelId, prices) (input tokens times the input price plus output tokens times the output price, per million, and throw for an unknown model), projectMonthly(expected, { model, prices }) returning { perRequestUSD, monthlyUSD }, and costAlert({ projectedMonthlyUSD, capUSD, warnAt }) returning { level: ok | warn | breach, ratio }, where exactly at the cap is a warn. In src/model.mjs throw UnpinnedModelError for an unpinned model when the service starts, and reject a call that takes longer than timeoutMs with an error that carries status 504 and code model_timeout. Every response carries meta: { model, maxTokens, usage, costUSD } and the model is told maxTokens.",
+    "approach": "This is the budget before the design, which is what the cost card in the last session was for. The cap is the client's number, the expected volume is yours, and the check is that the design fits: 20,000 requests a month at 700 tokens in and 120 out, on the pinned model, projects to a figure under the cap, with the warning line at 80 percent so that someone hears before the bill does. Pinning matters for the bill as much as for behaviour: a floating alias can move to a pricier or a more talkative model with nobody approving it. The timeout matters because a hung model call holds a customer, a connection and money.",
+    "commonMistakes": [
+      "Pinning to \"marlow-llm-latest\" or any name with no version in it: it is a moving alias, not a pin.",
+      "A model with no price in data/prices.json, so estimateCost throws on the first request.",
+      "Charging input and output at the same price: they are different by a factor of five.",
+      "Exactly at the cap treated as a breach: the rule is warn at the line up to the cap, breach above it.",
+      "A timeout that rejects but leaves the timer running, or a 500 instead of a 504 for a slow model."
+    ]
+  }
+}

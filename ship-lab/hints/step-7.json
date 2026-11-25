@@ -1,0 +1,27 @@
+{
+  "levels": [
+    {
+      "label": "A question to ask yourself",
+      "text": "A release gate says \"no leaks\". Under what conditions would it say that and be wrong? Think about: a corpus that is empty, a service that did not start, a flag that skips it, and a scan that uses the same regex it is testing."
+    },
+    {
+      "label": "The approach",
+      "text": "scripts/pii-boundary.mjs reads data/pii-corpus.json (each item has a query and the personal details inside it), starts the real service with its own temporary log, sends every query, then scans BOTH the answers AND the log for each detail with its OWN scan, not redactPII. Any leak, any error, a missing or empty or malformed corpus, or a service that will not start: exit 1. Exit 0 only when every request was checked and nothing leaked. No flag changes that. Print each request with clean or LEAK."
+    },
+    {
+      "label": "Nearly the answer",
+      "text": "block = reason => { console.error(\"PII_BOUNDARY_TEST BLOCKED: \" + reason); process.exit(1); }. Missing file, bad JSON, not an array, empty array, or an entry with no pii list: block(). holds(text, pii) = text.toLowerCase().includes(pii.toLowerCase()) OR (when pii has 10+ digits) the text with separators between digits squeezed out still contains those digits. await startService({ config: { ...config, logFile } }); fetch each query; a 5xx: block. After closing the service read the log. For each item compute inAnswer and inLog; add up the leaks; if any, block. Else print PASSED and how many requests were checked. Ignore every argument except --require-pass."
+    }
+  ],
+  "reveal": {
+    "referenceBrief": "Write scripts/pii-boundary.mjs, run by npm run test:pii-boundary -- --require-pass. It loads data/pii-corpus.json (a list of { id, query, pii: [the details inside the query] }), starts the real service on a temporary log file, sends every query to POST /api/chat, and scans both the text of every answer and the log for every detail, with its own scan that does not use redactPII (the exact text, case-insensitive, or the same digits with spaces, dashes or dots put between them). It prints one line for each request: clean or LEAK, with the detail. It exits 1 if anything leaked, if a request failed, if the service would not start, and if the corpus is missing, is not valid JSON, is empty or has an entry with nothing to look for. It exits 0 only when every request was checked and nothing leaked, and then says how many requests it checked. No argument or flag changes the exit code: there is no override.",
+    "approach": "A gate that can be talked out of failing is a suggestion. The three ways a gate lies are: it checks nothing and passes (an empty corpus), it checks the wrong thing (only the answers, so the log leak sails through), and it checks with the thing it tests (the same regex, so a pattern bug cancels itself). Failing closed means that when the gate cannot tell, it says no. The corpus is the gate's memory: every format that ever leaked in production goes in, and it is never taken out.",
+    "commonMistakes": [
+      "Scanning the answers only, or the log only: the two are separate leaks and the check has to read both.",
+      "Using redactPII to decide if something leaked: if the pattern misses a format, the gate misses it too.",
+      "Exit 0 when the corpus is empty or the service did not start: \"no leaks\" because nothing ran.",
+      "A --force or --skip flag \"for emergencies\": the first time someone is in a hurry, the gate is gone.",
+      "Matching only the exact text: a phone typed with spaces comes back as 98765 43210 and the plain check says clean."
+    ]
+  }
+}

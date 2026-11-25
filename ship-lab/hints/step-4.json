@@ -1,0 +1,27 @@
+{
+  "levels": [
+    {
+      "label": "A question to ask yourself",
+      "text": "The model is not under your control. If a customer's phone number is in the question and the model repeats it in the answer, which two places does it reach? And if the model prints its own instructions, how would you recognise it?"
+    },
+    {
+      "label": "The approach",
+      "text": "scanOutput(text) is the mirror of the input guard. It looks for two things in what the model said: signs of its own system prompt (the internal marker MARLOW-INTERNAL-7731, or sentences that only the system prompt contains), and personal data (use your redactPII). A leaked prompt is replaced by the fixed safe reply; personal data is replaced by the cleaned text. A normal answer must come back unchanged. In answer.mjs, scan the model's text and log and return the scanned version, never the raw one."
+    },
+    {
+      "label": "Nearly the answer",
+      "text": "const LEAK = [new RegExp(CANARY, \"i\"), /you are the marlow mobile support assistant/i, ...]. scanOutput(text): if not a string, block; if LEAK.some(re => re.test(text)) return { ok: false, reason: \"prompt_leak\", text: SAFE_REFUSAL }; const clean = redactPII(text); return clean === text ? { ok: true, text } : { ok: false, reason: \"pii\", text: clean }. In answer.mjs: const scan = scanOutput(r.text); and from then on use scan.text for the log line and for the response. CANARY is exported by src/prompt.mjs."
+    }
+  ],
+  "reveal": {
+    "referenceBrief": "Implement scanOutput(text) in src/guards.mjs, and use it in src/answer.mjs on the model's text before anything else sees it. It returns { ok, text, reason? }. If the text contains a sign of the system prompt (the internal marker from src/prompt.mjs, or wording that appears only in the system prompt) the text becomes the fixed safe reply and the reason is prompt_leak. If the text contains personal data it is replaced by the redacted text and the reason is pii. A clean answer comes back unchanged with ok true. A value that is not text is blocked. In answer.mjs log a warning event named guardrail.output_blocked when the scan changed anything, and log and return scan.text, never the raw model text.",
+    "approach": "The two guardrails work together. The input guard stops what it knows; the output guard catches what slipped past or what the model made up on its own, because a model can say a phone number from a retrieved document or repeat a detail from earlier in the conversation. That is defence in depth, and it is the answer to \"why both?\" in a review. Also notice that the log line and the response now hold the scanned text: one scan, both places.",
+    "commonMistakes": [
+      "Scanning the text, but logging or returning the original: the leak is still in one of the two places.",
+      "Matching the prompt leak with one exact sentence: a model rewords. Use the marker and two or three distinctive pieces.",
+      "Blocking a normal answer because it has a number in it. A price, a helpline and a date must come back unchanged.",
+      "Throwing the whole answer away for a phone number, when removing the number is enough.",
+      "Forgetting that a model can fail: if the scan crashes, the customer must not get the raw text."
+    ]
+  }
+}

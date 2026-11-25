@@ -1,0 +1,27 @@
+{
+  "levels": [
+    {
+      "label": "A question to ask yourself",
+      "text": "Look at 9876543210, 1499, 1800-123-4567 and 2026-11-30. Which of them are personal data, and what in the text tells you so? Write that down as a rule before you write a pattern."
+    },
+    {
+      "label": "The approach",
+      "text": "Three patterns, applied in this order: phone, then account, then address. A phone is an Indian mobile number: starts with 6 to 9, ten digits, with an optional +91, 91 or 0 in front, and a space or a dash allowed in the middle. An account is eleven to sixteen digits in a row, or groups of four digits. An address is a house or flat word followed by comma-separated capitalised parts, or a number followed by a name and Road or Street. Replace each with [REDACTED_PHONE], [REDACTED_ACCOUNT] or [REDACTED_ADDRESS]. Then call it ONCE, in the logger, on every line."
+    },
+    {
+      "label": "Nearly the answer",
+      "text": "export function redactPII(text) { return text.replace(PHONE, \"[REDACTED_PHONE]\").replace(ACCOUNT, \"[REDACTED_ACCOUNT]\") then the address patterns }. PHONE = /(?<!\\d)(?:\\(?\\+?91\\)?[\\s-]?|0)?[6-9]\\d{4}[\\s-]?\\d{5}(?!\\d)/g and ACCOUNT = /(?<!\\d)(?:(?:\\d{4}[\\s-]){2,3}\\d{2,4}|\\d{11,16})(?!\\d)/g. Also export redactDeep(value), which walks an object and redacts every string in it. In src/log.mjs wrap the whole record in redactDeep before JSON.stringify. Do not touch src/server.mjs or src/answer.mjs: the boundary is the logger."
+    }
+  ],
+  "reveal": {
+    "referenceBrief": "Implement src/redact.mjs. redactPII(text) replaces Indian mobile numbers (6 to 9, ten digits, optional +91 or 91 or 0, optional space or dash in the middle) with [REDACTED_PHONE], account numbers (eleven to sixteen digits, or groups of four digits) with [REDACTED_ACCOUNT], and addresses (a flat, house, door or plot word followed by capitalised comma-separated parts, or a #number followed by parts, or a number and a name ending in Road, Street and the like) with [REDACTED_ADDRESS]. Ordinary numbers must survive: a price such as 1499, a helpline such as 1800-123-4567, a date, a time and a plan code such as UP-24. A value that is not a string comes back unchanged. redactDeep(value) does the same for every string inside an object or an array, and turns an Error into a plain object that can be logged. Apply redactDeep once, in src/log.mjs, to the whole record of every line. Do not mention redaction in src/server.mjs or src/answer.mjs.",
+    "approach": "Doing it in the logger is the point. If every call site has to remember to hide the data, one of them will forget, on a Friday, in a new feature. At the boundary it is one place to read, one place to test, and one place a reviewer has to look. The patterns are heuristics and say so: a twelve-digit account that starts with 91 looks like a phone with a country code, and an address written a new way is missed. That is why the gate in milestone 7 has a corpus that you keep extending.",
+    "commonMistakes": [
+      "Redacting at each call site (in answer.mjs, in the server) instead of in the logger: the next call site forgets.",
+      "A pattern so wide that it hides a price or the helpline number. 1499 and 1800-123-4567 must survive.",
+      "Doing the account before the phone, so a ten-digit phone inside a longer digit string is cut in the wrong place.",
+      "Only matching a phone with no spaces, so \"+91 98765 43210\" and \"98765-43210\" leak.",
+      "Redacting the log message but not the fields inside it: redactDeep has to go through nested objects."
+    ]
+  }
+}

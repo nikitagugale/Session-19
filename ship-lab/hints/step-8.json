@@ -1,0 +1,27 @@
+{
+  "levels": [
+    {
+      "label": "A question to ask yourself",
+      "text": "It is 02:00 and the feature is giving customers wrong answers. What is the fastest safe thing you can do, who can do it, and how do you know afterwards that it worked? Write the three answers before you write any code."
+    },
+    {
+      "label": "The approach",
+      "text": "Five small pieces. (1) src/flags.mjs: isEnabled(\"faq\", { flagsFile }) reads the file EVERY time and returns false if it cannot read it. (2) The server returns 503 with a Retry-After header for POST /api/chat when the flag is off, and has GET /version (the GIT_SHA, the model, on or off). (3) /healthz exercises the knowledge base, the log and the model, and is 503 when one is broken (but 200 when the flag is off on purpose). (4) scripts/drill.mjs deploys, checks, flips the flag, times the rollback and writes results/drill-report.json. (5) scripts/image-tag.mjs prints marlow-faq:<7-character sha> (or -dirty), scripts/build-image.mjs --dry prints the docker build command, and the Dockerfile takes GIT_SHA as an argument."
+    },
+    {
+      "label": "Nearly the answer",
+      "text": "isEnabled = try { return JSON.parse(readFileSync(flagsFile, \"utf8\"))[`${name}_enabled`] === true } catch { return false }. Server: if (!isEnabled(...)) send 503 { error: \"feature_disabled\" } with header retry-after. checkHealth: knowledge_base = kb.sections.length > 0, log = appendFileSync(file, \"\") works, model = a tiny complete() call succeeds, flag on or off; ok only if the first three are ok. image-tag: git rev-parse --short=7 HEAD; git status --porcelain not empty means add -dirty; print ONLY the tag to stdout, warnings to stderr; exit 1 with no commit. Dockerfile: FROM node:20.18-alpine3.20, ARG GIT_SHA, ENV GIT_SHA=$GIT_SHA HOST=0.0.0.0, LABEL org.opencontainers.image.revision=$GIT_SHA, USER node, HEALTHCHECK, CMD [\"node\", \"src/main.mjs\"], and COPY only engine, package.json, src, data and config. The two scripts must run on their own, so any helper they share lives inside scripts/. The build context is the folder above service/, because the image needs engine/ too."
+    }
+  ],
+  "reveal": {
+    "referenceBrief": "Build the release machinery. src/flags.mjs: isEnabled(name, { flagsFile }) reads config/flags.json on every call and returns true only if it says <name>_enabled is true; a missing or unreadable file means false. src/server.mjs: POST /api/chat returns 503 { error: \"feature_disabled\" } with a Retry-After header when the flag is off, and works again the moment it is switched on, with no restart; GET /version returns { gitSha (from the GIT_SHA environment variable, or \"unknown\"), model, faq: \"on\" or \"off\", startedAt }; GET /healthz returns 200 with { ok, checks: { knowledge_base, log, model, flag } } and 503 when the knowledge base is empty, the log cannot be written or the model does not answer, but 200 when the feature is off on purpose. scripts/drill.mjs starts a release with its own port, log and flag file and runs these steps: health check, a real question gets a grounded answer, /version names the commit, an injection is refused, personal data is not in the deployed log, flip the flag off and time how long until requests stop (it must be under two seconds), health still fine, flip it on and requests work again. It writes results/drill-report.json with ok, rollbackMs and the steps, and exits 1 if any step failed. scripts/image-tag.mjs prints marlow-faq:<7-character git sha> to stdout (with -dirty when there are uncommitted changes, and a warning on stderr; exit 1 if there is no commit; never latest). scripts/build-image.mjs --dry prints the docker build command with --build-arg GIT_SHA=<sha> and -t marlow-faq:<sha>. The Dockerfile pins its base image to a version, takes ARG GIT_SHA, sets ENV GIT_SHA and ENV HOST=0.0.0.0 (so a published port can reach the server), labels the image org.opencontainers.image.revision with it, copies only what runs, runs as USER node and has a HEALTHCHECK.",
+    "approach": "Rollback is the feature you hope never to use, which is why it needs a drill: a rollback that has never been run is a belief, not a control. Flipping a flag is the fast one (seconds, no deploy), so the flag is read every time and fails closed. The health check has to be deep: a process that is running and returning 200 while the knowledge base is empty or the model is down is the most dangerous kind of \"healthy\". And the image tag is the answer to \"what is running in production?\": the SHA on the image, in the label and in /version means that in an incident you go from a customer complaint to the exact commit in one step.",
+    "commonMistakes": [
+      "Reading the flag file once at start-up: the flag then only works after a restart, which is not a rollback.",
+      "A missing flag file meaning ON: when you cannot tell, the safe answer is off.",
+      "A health check that returns 200 because the process is up, without touching the knowledge base, the log or the model.",
+      "Tagging the image \"latest\", or tagging it with a date: neither tells you which commit is inside.",
+      "A dirty tree tagged as clean: the tag claims a commit that is not what was built."
+    ]
+  }
+}
